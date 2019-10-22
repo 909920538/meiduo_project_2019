@@ -1,10 +1,13 @@
 import re
 
 from django import http
+from django.contrib.auth import login
+
 from django.db import DatabaseError
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 
 # Create your views here.
+from django.urls import reverse
 from django.views import View
 
 from apps.users.models import User
@@ -27,6 +30,7 @@ class RegisterView(View):
         :param request: 请求对象
         :return: 注册结果
         """
+        print(111111)
         username = request.POST.get('username')
         password = request.POST.get('password')
         password2 = request.POST.get('password2')
@@ -53,9 +57,12 @@ class RegisterView(View):
             return http.HttpResponseBadRequest('请勾选用户协议')
         # 保存注册数据
         try:
-            User.objects.create_user(username=username, password=password, mobile=mobile)
+            user = User.objects.create_user(username=username, password=password, mobile=mobile)
         except DatabaseError:
             return render(request, 'register.html', {'register_errmsg': '注册失败'})
 
+        # 实现状态保持
+        login(request, user)
+
         # 响应注册结果
-        return http.HttpResponse('注册成功，重定向到首页')
+        return redirect(reverse('index:index'))
